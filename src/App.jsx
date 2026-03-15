@@ -57,11 +57,21 @@ function App() {
               </span>
               <input
                 type="text"
-                placeholder="Search photos, authors or categories..."
-                className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                placeholder="Search by author name..."
+                className="block w-full pl-10 pr-10 py-3 border border-slate-200 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
             </div>
 
             <div className="inline-flex items-center px-6 py-3 bg-white rounded-xl shadow-sm border border-slate-200">
@@ -97,8 +107,8 @@ function App() {
                   <button
                     onClick={() => toggleFavorite(photo)}
                     className={`p-2 rounded-full transition-all duration-300 flex-shrink-0 ${isFavorite
-                        ? 'bg-red-50 text-red-500 shadow-inner rotate-3'
-                        : 'bg-slate-50 text-slate-400 hover:text-red-400 hover:bg-red-50'
+                      ? 'bg-red-50 text-red-500 shadow-inner rotate-3'
+                      : 'bg-slate-50 text-slate-400 hover:text-red-400 hover:bg-red-50'
                       }`}
                     aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
                   >
