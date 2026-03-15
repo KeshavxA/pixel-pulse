@@ -1,18 +1,9 @@
 import { useReducer, useEffect, useState, useMemo, useCallback } from 'react'
 import { favoritesReducer, initialState } from './favoritesReducer'
-
-const MOCK_PHOTOS = [
-  { id: 1, url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&q=80', title: 'Mountain Lake', category: 'Nature', author: 'John Doe' },
-  { id: 2, url: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&q=80', title: 'Forest Mist', category: 'Nature', author: 'Jane Smith' },
-  { id: 3, url: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80', title: 'Sunshine Woods', category: 'Nature', author: 'Alex Rivera' },
-  { id: 4, url: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&q=80', title: 'Ocean Sunset', category: 'Nature', author: 'Sarah Brown' },
-  { id: 5, url: 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=800&q=80', title: 'Green Meadows', category: 'Nature', author: 'Michael Chen' },
-  { id: 6, url: 'https://images.unsplash.com/photo-1532274402911-5a3b953c5bb2?w=800&q=80', title: 'Golden Fields', category: 'Nature', author: 'Emma Wilson' },
-  { id: 7, url: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&q=80', title: 'Quiet Farm', category: 'Rural', author: 'David Clark' },
-  { id: 8, url: 'https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=800&q=80', title: 'Majestic Peaks', category: 'Nature', author: 'Lucas Martin' },
-]
+import { useFetchPhotos } from './useFetchPhotos'
 
 function App() {
+  const { photos, loading, error } = useFetchPhotos()
   const [favorites, dispatch] = useReducer(favoritesReducer, initialState)
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -34,12 +25,11 @@ function App() {
   }, [])
 
   const filteredPhotos = useMemo(() => {
-    return MOCK_PHOTOS.filter(photo =>
-      photo.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      photo.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      photo.author.toLowerCase().includes(searchQuery.toLowerCase())
+    return photos.filter(photo =>
+      photo.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      photo.title.toLowerCase().includes(searchQuery.toLowerCase())
     )
-  }, [searchQuery])
+  }, [photos, searchQuery])
 
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -85,62 +75,86 @@ function App() {
           </div>
         </header>
 
-        <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {filteredPhotos.map((photo) => {
-            const isFavorite = favorites.some((fav) => fav.id === photo.id)
-            return (
-              <div
-                key={photo.id}
-                className="group relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-slate-100"
+        <main>
+          {loading && (
+            <div className="flex flex-col items-center justify-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              <p className="mt-4 text-slate-500 font-medium">Loading amazing photography...</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="text-center py-12 px-6 bg-red-50 rounded-2xl border border-red-100">
+              <p className="text-red-600 font-semibold mb-2">Oops! Something went wrong.</p>
+              <p className="text-red-500 text-sm">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-sm"
               >
-                <div className="overflow-hidden">
-                  <img
-                    src={photo.url}
-                    alt={photo.title}
-                    className="w-full h-48 object-cover transform transition-transform duration-500 group-hover:scale-110"
-                    loading="lazy"
-                  />
-                </div>
+                Try Again
+              </button>
+            </div>
+          )}
 
-                <div className="p-4 flex justify-between items-center">
-                  <div className="truncate pr-2">
-                    <h3 className="text-base font-bold text-slate-800 truncate">{photo.title}</h3>
-                    <p className="text-xs font-medium text-blue-600 mb-0.5">@{photo.author.toLowerCase().replace(' ', '')}</p>
-                    <p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">{photo.category}</p>
-                  </div>
-                  <button
-                    onClick={() => toggleFavorite(photo)}
-                    className={`p-2 rounded-full transition-all duration-300 flex-shrink-0 ${isFavorite
-                      ? 'bg-red-50 text-red-500 shadow-inner rotate-3'
-                      : 'bg-slate-50 text-slate-400 hover:text-red-400 hover:bg-red-50'
-                      }`}
-                    aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+          {!loading && !error && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {filteredPhotos.map((photo) => {
+                const isFavorite = favorites.some((fav) => fav.id === photo.id)
+                return (
+                  <div
+                    key={photo.id}
+                    className="group relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-slate-100"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className={`h-5 w-5 ${isFavorite ? 'fill-current' : 'fill-none'}`}
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                    <div className="overflow-hidden">
+                      <img
+                        src={photo.url}
+                        alt={photo.title}
+                        className="w-full h-48 object-cover transform transition-transform duration-500 group-hover:scale-110"
+                        loading="lazy"
                       />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            )
-          })}
-        </main>
+                    </div>
 
-        {filteredPhotos.length === 0 && (
-          <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300 mt-8">
-            <p className="text-slate-500 text-lg">No photos found matching "{searchQuery}"</p>
-          </div>
-        )}
+                    <div className="p-4 flex justify-between items-center">
+                      <div className="truncate pr-2">
+                        <h3 className="text-base font-bold text-slate-800 truncate">{photo.title}</h3>
+                        <p className="text-xs font-medium text-blue-600 mb-0.5">@{photo.author.toLowerCase().replace(' ', '')}</p>
+                        <p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">{photo.category}</p>
+                      </div>
+                      <button
+                        onClick={() => toggleFavorite(photo)}
+                        className={`p-2 rounded-full transition-all duration-300 flex-shrink-0 ${isFavorite
+                            ? 'bg-red-50 text-red-500 shadow-inner rotate-3'
+                            : 'bg-slate-50 text-slate-400 hover:text-red-400 hover:bg-red-50'
+                          }`}
+                        aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className={`h-5 w-5 ${isFavorite ? 'fill-current' : 'fill-none'}`}
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {!loading && !error && filteredPhotos.length === 0 && (
+            <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300 mt-8">
+              <p className="text-slate-500 text-lg">No photos found matching "{searchQuery}"</p>
+            </div>
+          )}
+        </main>
 
         {favorites.length > 0 && (
           <section className="mt-20">
