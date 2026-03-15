@@ -29,6 +29,10 @@ function App() {
     }
   }, [favorites])
 
+  const handleSearch = useCallback((e) => {
+    setSearchQuery(e.target.value)
+  }, [])
+
   const filteredPhotos = useMemo(() => {
     return MOCK_PHOTOS.filter(photo =>
       photo.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -60,7 +64,7 @@ function App() {
                 placeholder="Search by author name..."
                 className="block w-full pl-10 pr-10 py-3 border border-slate-200 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={handleSearch}
               />
               {searchQuery && (
                 <button
