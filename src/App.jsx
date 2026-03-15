@@ -1,4 +1,4 @@
-import { useReducer, useMemo } from 'react'
+import { useReducer, useEffect } from 'react'
 import { favoritesReducer, initialState } from './favoritesReducer'
 
 const MOCK_PHOTOS = [
@@ -12,6 +12,10 @@ const MOCK_PHOTOS = [
 
 function App() {
   const [favorites, dispatch] = useReducer(favoritesReducer, initialState)
+
+  useEffect(() => {
+    localStorage.setItem('favorites', JSON.stringify(favorites))
+  }, [favorites])
 
   const toggleFavorite = (photo) => {
     const isFavorite = favorites.some((fav) => fav.id === photo.id)
@@ -63,8 +67,8 @@ function App() {
                   <button
                     onClick={() => toggleFavorite(photo)}
                     className={`p-3 rounded-full transition-all duration-300 ${isFavorite
-                        ? 'bg-red-50 text-red-500 shadow-inner'
-                        : 'bg-slate-50 text-slate-400 hover:text-red-400 hover:bg-red-50'
+                      ? 'bg-red-50 text-red-500 shadow-inner'
+                      : 'bg-slate-50 text-slate-400 hover:text-red-400 hover:bg-red-50'
                       }`}
                   >
                     <svg
