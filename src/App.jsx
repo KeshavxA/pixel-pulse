@@ -2,14 +2,14 @@ import { useReducer, useEffect, useState, useMemo, useCallback } from 'react'
 import { favoritesReducer, initialState } from './favoritesReducer'
 
 const MOCK_PHOTOS = [
-  { id: 1, url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&q=80', title: 'Mountain Lake', category: 'Nature' },
-  { id: 2, url: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&q=80', title: 'Forest Mist', category: 'Nature' },
-  { id: 3, url: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80', title: 'Sunshine Woods', category: 'Nature' },
-  { id: 4, url: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&q=80', title: 'Ocean Sunset', category: 'Nature' },
-  { id: 5, url: 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=800&q=80', title: 'Green Meadows', category: 'Nature' },
-  { id: 6, url: 'https://images.unsplash.com/photo-1532274402911-5a3b953c5bb2?w=800&q=80', title: 'Golden Fields', category: 'Nature' },
-  { id: 7, url: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&q=80', title: 'Quiet Farm', category: 'Rural' },
-  { id: 8, url: 'https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=800&q=80', title: 'Majestic Peaks', category: 'Nature' },
+  { id: 1, url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&q=80', title: 'Mountain Lake', category: 'Nature', author: 'John Doe' },
+  { id: 2, url: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&q=80', title: 'Forest Mist', category: 'Nature', author: 'Jane Smith' },
+  { id: 3, url: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80', title: 'Sunshine Woods', category: 'Nature', author: 'Alex Rivera' },
+  { id: 4, url: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&q=80', title: 'Ocean Sunset', category: 'Nature', author: 'Sarah Brown' },
+  { id: 5, url: 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=800&q=80', title: 'Green Meadows', category: 'Nature', author: 'Michael Chen' },
+  { id: 6, url: 'https://images.unsplash.com/photo-1532274402911-5a3b953c5bb2?w=800&q=80', title: 'Golden Fields', category: 'Nature', author: 'Emma Wilson' },
+  { id: 7, url: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&q=80', title: 'Quiet Farm', category: 'Rural', author: 'David Clark' },
+  { id: 8, url: 'https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=800&q=80', title: 'Majestic Peaks', category: 'Nature', author: 'Lucas Martin' },
 ]
 
 function App() {
@@ -32,7 +32,8 @@ function App() {
   const filteredPhotos = useMemo(() => {
     return MOCK_PHOTOS.filter(photo =>
       photo.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      photo.category.toLowerCase().includes(searchQuery.toLowerCase())
+      photo.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      photo.author.toLowerCase().includes(searchQuery.toLowerCase())
     )
   }, [searchQuery])
 
@@ -44,7 +45,7 @@ function App() {
             Pixel Pulse
           </h1>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto mb-8">
-            Explore a premium collection of nature photography.
+            Explore a premium collection of fine photography by world-class artists.
           </p>
 
           <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-12">
@@ -56,7 +57,7 @@ function App() {
               </span>
               <input
                 type="text"
-                placeholder="Search photos or categories..."
+                placeholder="Search photos, authors or categories..."
                 className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -90,7 +91,8 @@ function App() {
                 <div className="p-4 flex justify-between items-center">
                   <div className="truncate pr-2">
                     <h3 className="text-base font-bold text-slate-800 truncate">{photo.title}</h3>
-                    <p className="text-xs text-slate-500">{photo.category}</p>
+                    <p className="text-xs font-medium text-blue-600 mb-0.5">@{photo.author.toLowerCase().replace(' ', '')}</p>
+                    <p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">{photo.category}</p>
                   </div>
                   <button
                     onClick={() => toggleFavorite(photo)}
@@ -139,9 +141,12 @@ function App() {
                     className="w-full h-24 object-cover rounded-xl shadow-sm border-2 border-white transform transition-transform group-hover:scale-105"
                     alt={photo.title}
                   />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
+                    <p className="text-[8px] text-white font-bold p-1 text-center truncate">{photo.author}</p>
+                  </div>
                   <button
                     onClick={() => dispatch({ type: 'REMOVE_FAVORITE', payload: photo })}
-                    className="absolute -top-2 -right-2 bg-white text-red-500 rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
+                    className="absolute -top-2 -right-2 bg-white text-red-500 rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 z-10"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
