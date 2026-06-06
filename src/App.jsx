@@ -1,9 +1,21 @@
-import { useReducer, useEffect, useState, useMemo, useCallback } from 'react'
+import { useReducer, useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { favoritesReducer, initialState } from './favoritesReducer'
 import { useFetchPhotos } from './useFetchPhotos'
 
 function App() {
-  const { photos, loading, error } = useFetchPhotos()
+  const { photos, loading, error, loadMore, hasMore } = useFetchPhotos()
+  const observer = useRef()
+  
+  const lastPhotoElementRef = useCallback(node => {
+    if (loading) return
+    if (observer.current) observer.current.disconnect()
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        loadMore()
+      }
+    })
+    if (node) observer.current.observe(node)
+  }, [loading, hasMore, loadMore])
   const [favorites, dispatch] = useReducer(favoritesReducer, initialState)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
@@ -104,15 +116,8 @@ function App() {
         </header>
 
         <main>
-          {loading && (
-            <div className="flex flex-col items-center justify-center py-20">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-              <p className="mt-4 text-slate-500 font-medium">Loading amazing photography...</p>
-            </div>
-          )}
-
           {error && (
-            <div className="text-center py-12 px-6 bg-red-50 rounded-2xl border border-red-100">
+            <div className="text-center py-12 px-6 bg-red-50 rounded-2xl border border-red-100 mb-8">
               <p className="text-red-600 font-semibold mb-2">Oops! Something went wrong.</p>
               <p className="text-red-500 text-sm">{error}</p>
               <button
@@ -124,16 +129,17 @@ function App() {
             </div>
           )}
 
-          {!loading && !error && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {filteredPhotos.map((photo) => {
-                const isFavorite = favorites.some((fav) => fav.id === photo.id)
-                return (
-                  <div
-                    key={photo.id}
-                    onClick={() => setSelectedPhoto(photo)}
-                    className="group relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-slate-100 cursor-pointer"
-                  >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {filteredPhotos.map((photo, index) => {
+              const isFavorite = favorites.some((fav) => fav.id === photo.id)
+              const isLastItem = index === filteredPhotos.length - 1
+              return (
+                <div
+                  ref={isLastItem ? lastPhotoElementRef : null}
+                  key={`${photo.id}-${index}`}
+                  onClick={() => setSelectedPhoto(photo)}
+                  className="group relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-slate-100 cursor-pointer"
+                >
                     <div className="overflow-hidden">
                       <img
                         src={photo.url}
@@ -179,12 +185,24 @@ function App() {
                 )
               })}
             </div>
+
+          {loading && (
+            <div className="flex flex-col items-center justify-center py-12 mt-4 w-full col-span-full">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+              <p className="mt-4 text-slate-500 font-medium">Loading more photography...</p>
+            </div>
           )}
 
           {!loading && !error && filteredPhotos.length === 0 && (
             <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300 mt-8">
               <p className="text-slate-500 text-lg">No photos found matching "{searchQuery}"</p>
             </div>
+          )}
+          
+          {!hasMore && filteredPhotos.length > 0 && !loading && (
+             <div className="text-center py-10 mt-4">
+               <p className="text-slate-400 font-medium">You've reached the end of the gallery.</p>
+             </div>
           )}
         </main>
 
