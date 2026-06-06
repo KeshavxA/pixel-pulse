@@ -6,6 +6,13 @@ function App() {
   const { photos, loading, error } = useFetchPhotos()
   const [favorites, dispatch] = useReducer(favoritesReducer, initialState)
   const [searchQuery, setSearchQuery] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('All')
+
+  const categories = useMemo(() => {
+    if (!photos) return ['All']
+    const uniqueCategories = new Set(photos.map(photo => photo.category).filter(Boolean))
+    return ['All', ...Array.from(uniqueCategories)]
+  }, [photos])
 
   useEffect(() => {
     localStorage.setItem('favorites', JSON.stringify(favorites))
@@ -25,11 +32,13 @@ function App() {
   }, [])
 
   const filteredPhotos = useMemo(() => {
-    return photos.filter(photo =>
-      photo.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      photo.title.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  }, [photos, searchQuery])
+    return photos.filter(photo => {
+      const matchesSearch = photo.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            photo.title.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesCategory = selectedCategory === 'All' || photo.category === selectedCategory
+      return matchesSearch && matchesCategory
+    })
+  }, [photos, searchQuery, selectedCategory])
 
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -73,6 +82,24 @@ function App() {
               <span className="font-semibold text-slate-700">{favorites.length} Favorites</span>
             </div>
           </div>
+
+          {!loading && !error && categories.length > 1 && (
+            <div className="flex flex-wrap items-center justify-center gap-2 mb-10">
+              {categories.map(category => (
+                <button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${
+                    selectedCategory === category
+                      ? 'bg-slate-900 text-white shadow-md transform scale-105'
+                      : 'bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200 hover:border-slate-300 hover:shadow-sm'
+                  }`}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+          )}
         </header>
 
         <main>
