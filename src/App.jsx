@@ -7,6 +7,7 @@ function App() {
   const [favorites, dispatch] = useReducer(favoritesReducer, initialState)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
+  const [selectedPhoto, setSelectedPhoto] = useState(null)
 
   const categories = useMemo(() => {
     if (!photos) return ['All']
@@ -130,7 +131,8 @@ function App() {
                 return (
                   <div
                     key={photo.id}
-                    className="group relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-slate-100"
+                    onClick={() => setSelectedPhoto(photo)}
+                    className="group relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-slate-100 cursor-pointer"
                   >
                     <div className="overflow-hidden">
                       <img
@@ -148,7 +150,10 @@ function App() {
                         <p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">{photo.category}</p>
                       </div>
                       <button
-                        onClick={() => toggleFavorite(photo)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          toggleFavorite(photo)
+                        }}
                         className={`p-2 rounded-full transition-all duration-300 flex-shrink-0 ${isFavorite
                             ? 'bg-red-50 text-red-500 shadow-inner rotate-3'
                             : 'bg-slate-50 text-slate-400 hover:text-red-400 hover:bg-red-50'
@@ -213,6 +218,80 @@ function App() {
           </section>
         )}
       </div>
+
+      {/* Lightbox Modal */}
+      {selectedPhoto && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/90 backdrop-blur-sm transition-opacity duration-300" onClick={() => setSelectedPhoto(null)}>
+          <div className="relative bg-white rounded-2xl shadow-2xl overflow-hidden max-w-5xl w-full flex flex-col md:flex-row max-h-[90vh] animate-in fade-in zoom-in duration-300" onClick={e => e.stopPropagation()}>
+            <button 
+              onClick={() => setSelectedPhoto(null)}
+              className="absolute top-4 right-4 z-10 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
+              aria-label="Close modal"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <div className="w-full md:w-2/3 bg-slate-100 flex items-center justify-center">
+               <img src={selectedPhoto.url} alt={selectedPhoto.title} className="max-h-[50vh] md:max-h-[90vh] object-contain w-full" />
+            </div>
+            <div className="w-full md:w-1/3 p-6 sm:p-8 flex flex-col justify-between overflow-y-auto">
+              <div>
+                <div className="flex justify-between items-start mb-2">
+                  <h2 className="text-3xl font-bold text-slate-900">{selectedPhoto.title}</h2>
+                </div>
+                <p className="text-lg text-blue-600 font-medium mb-6">@{selectedPhoto.author.toLowerCase().replace(' ', '')}</p>
+                
+                <div className="space-y-4 mb-8">
+                  <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Photo Details</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                      <p className="text-xs text-slate-500 mb-1">Camera</p>
+                      <p className="text-sm font-semibold text-slate-800">Sony A7R IV</p>
+                    </div>
+                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                      <p className="text-xs text-slate-500 mb-1">Lens</p>
+                      <p className="text-sm font-semibold text-slate-800">24-70mm f/2.8</p>
+                    </div>
+                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                      <p className="text-xs text-slate-500 mb-1">Aperture</p>
+                      <p className="text-sm font-semibold text-slate-800">f/8.0</p>
+                    </div>
+                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                      <p className="text-xs text-slate-500 mb-1">ISO</p>
+                      <p className="text-sm font-semibold text-slate-800">100</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex gap-3 mt-4">
+                <button 
+                  className="flex-1 bg-slate-900 text-white py-3 px-4 rounded-xl font-semibold hover:bg-slate-800 transition-colors flex justify-center items-center gap-2"
+                  onClick={() => window.open(selectedPhoto.url, '_blank')}
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Download Original
+                </button>
+                <button 
+                  className="p-3 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 transition-colors" 
+                  title="Copy link"
+                  onClick={() => {
+                    navigator.clipboard.writeText(selectedPhoto.url);
+                    alert("Image URL copied to clipboard!");
+                  }}
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
