@@ -20,6 +20,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [selectedPhoto, setSelectedPhoto] = useState(null)
+  const [sortBy, setSortBy] = useState('default')
 
   const categories = useMemo(() => {
     if (!photos) return ['All']
@@ -45,13 +46,25 @@ function App() {
   }, [])
 
   const filteredPhotos = useMemo(() => {
-    return photos.filter(photo => {
+    let result = photos.filter(photo => {
       const matchesSearch = photo.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             photo.title.toLowerCase().includes(searchQuery.toLowerCase())
       const matchesCategory = selectedCategory === 'All' || photo.category === selectedCategory
       return matchesSearch && matchesCategory
     })
-  }, [photos, searchQuery, selectedCategory])
+    
+    if (sortBy === 'authorAsc') {
+      result = [...result].sort((a, b) => a.author.localeCompare(b.author))
+    } else if (sortBy === 'authorDesc') {
+      result = [...result].sort((a, b) => b.author.localeCompare(a.author))
+    } else if (sortBy === 'newest') {
+      result = [...result].sort((a, b) => parseInt(b.id) - parseInt(a.id))
+    } else if (sortBy === 'oldest') {
+      result = [...result].sort((a, b) => parseInt(a.id) - parseInt(b.id))
+    }
+    
+    return result
+  }, [photos, searchQuery, selectedCategory, sortBy])
 
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -90,9 +103,30 @@ function App() {
               )}
             </div>
 
-            <div className="inline-flex items-center px-6 py-3 bg-white rounded-xl shadow-sm border border-slate-200">
-              <span className="text-red-500 mr-2">❤️</span>
-              <span className="font-semibold text-slate-700">{favorites.length} Favorites</span>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="appearance-none w-full sm:w-auto bg-white border border-slate-200 text-slate-700 py-3 pl-4 pr-10 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium cursor-pointer"
+                >
+                  <option value="default">Default Sort</option>
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                  <option value="authorAsc">Author (A-Z)</option>
+                  <option value="authorDesc">Author (Z-A)</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+
+              <div className="inline-flex items-center px-6 py-3 bg-white rounded-xl shadow-sm border border-slate-200">
+                <span className="text-red-500 mr-2">❤️</span>
+                <span className="font-semibold text-slate-700">{favorites.length} Favorites</span>
+              </div>
             </div>
           </div>
 
