@@ -179,7 +179,7 @@ function App() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="columns-1 sm:columns-2 lg:columns-4 gap-6">
             {filteredPhotos.map((photo, index) => {
               const isFavorite = favorites.some((fav) => fav.id === photo.id)
               const isLastItem = index === filteredPhotos.length - 1
@@ -188,13 +188,13 @@ function App() {
                   ref={isLastItem ? lastPhotoElementRef : null}
                   key={`${photo.id}-${index}`}
                   onClick={() => setSelectedPhoto(photo)}
-                  className="group relative bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-slate-100 dark:border-slate-700 cursor-pointer"
+                  className="group relative bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-slate-100 dark:border-slate-700 cursor-pointer break-inside-avoid mb-6 inline-block w-full"
                 >
-                    <div className="overflow-hidden">
+                    <div className="overflow-hidden bg-slate-200 dark:bg-slate-700">
                       <img
                         src={photo.url}
                         alt={photo.title}
-                        className="w-full h-48 object-cover transform transition-transform duration-500 group-hover:scale-110"
+                        className="w-full h-auto object-cover transform transition-transform duration-500 group-hover:scale-110"
                         loading="lazy"
                       />
                     </div>
@@ -209,7 +209,7 @@ function App() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                            window.open(photo.url, '_blank')
+                            window.open(photo.fullUrl || photo.url, '_blank')
                           }}
                           className="p-2 rounded-full transition-all duration-300 bg-slate-50 dark:bg-slate-700 text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-600"
                           title="Download"
@@ -221,7 +221,7 @@ function App() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                            navigator.clipboard.writeText(photo.url)
+                            navigator.clipboard.writeText(photo.fullUrl || photo.url)
                             alert("Image URL copied to clipboard!")
                           }}
                           className="p-2 rounded-full transition-all duration-300 bg-slate-50 dark:bg-slate-700 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600"
@@ -328,7 +328,7 @@ function App() {
               </svg>
             </button>
             <div className="w-full md:w-2/3 bg-slate-100 dark:bg-slate-900 flex items-center justify-center transition-colors">
-               <img src={selectedPhoto.url} alt={selectedPhoto.title} className="max-h-[50vh] md:max-h-[90vh] object-contain w-full" />
+               <img src={selectedPhoto.fullUrl || selectedPhoto.url} alt={selectedPhoto.title} className="max-h-[50vh] md:max-h-[90vh] object-contain w-full" />
             </div>
             <div className="w-full md:w-1/3 p-6 sm:p-8 flex flex-col justify-between overflow-y-auto">
               <div>
@@ -363,7 +363,7 @@ function App() {
               <div className="flex gap-3 mt-4">
                 <button 
                   className="flex-1 bg-slate-900 dark:bg-blue-600 text-white py-3 px-4 rounded-xl font-semibold hover:bg-slate-800 dark:hover:bg-blue-700 transition-colors flex justify-center items-center gap-2"
-                  onClick={() => window.open(selectedPhoto.url, '_blank')}
+                  onClick={() => window.open(selectedPhoto.fullUrl || selectedPhoto.url, '_blank')}
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -374,7 +374,7 @@ function App() {
                   className="p-3 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors" 
                   title="Copy link"
                   onClick={() => {
-                    navigator.clipboard.writeText(selectedPhoto.url);
+                    navigator.clipboard.writeText(selectedPhoto.fullUrl || selectedPhoto.url);
                     alert("Image URL copied to clipboard!");
                   }}
                 >

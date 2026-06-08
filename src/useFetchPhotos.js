@@ -26,10 +26,12 @@ export function useFetchPhotos() {
                 const formattedPhotos = data.map(photo => {
                     // Create a deterministic category based on ID
                     const categoryIndex = parseInt(photo.id, 10) % categoriesList.length;
+                    const scaledHeight = Math.round((600 / photo.width) * photo.height);
                     
                     return {
                         id: photo.id,
-                        url: photo.download_url,
+                        url: `https://picsum.photos/id/${photo.id}/600/${scaledHeight}`,
+                        fullUrl: photo.download_url,
                         title: `Visual Series #${photo.id}`, 
                         author: photo.author,
                         category: categoriesList[categoryIndex]
