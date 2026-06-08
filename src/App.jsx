@@ -41,14 +41,27 @@ function App() {
     localStorage.setItem('favorites', JSON.stringify(favorites))
   }, [favorites])
 
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' })
+  const toastTimeout = useRef(null)
+
+  const showToast = useCallback((message, type = 'success') => {
+    if (toastTimeout.current) clearTimeout(toastTimeout.current)
+    setToast({ show: true, message, type })
+    toastTimeout.current = setTimeout(() => {
+      setToast(prev => ({ ...prev, show: false }))
+    }, 3000)
+  }, [])
+
   const toggleFavorite = useCallback((photo) => {
     const isFavorite = favorites.some((fav) => fav.id === photo.id)
     if (isFavorite) {
       dispatch({ type: 'REMOVE_FAVORITE', payload: photo })
+      showToast('Removed from favorites', 'info')
     } else {
       dispatch({ type: 'ADD_FAVORITE', payload: photo })
+      showToast('Added to favorites', 'success')
     }
-  }, [favorites])
+  }, [favorites, showToast])
 
   const handleSearch = useCallback((e) => {
     setSearchQuery(e.target.value)
@@ -222,7 +235,7 @@ function App() {
                           onClick={(e) => {
                             e.stopPropagation()
                             navigator.clipboard.writeText(photo.fullUrl || photo.url)
-                            alert("Image URL copied to clipboard!")
+                            showToast("Link copied to clipboard!", "success")
                           }}
                           className="p-2 rounded-full transition-all duration-300 bg-slate-50 dark:bg-slate-700 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600"
                           title="Copy link"
@@ -330,10 +343,37 @@ function App() {
       </div>
 
       {/* Lightbox Modal */}
+      {/* Toast Notification */}
+      <div 
+        className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 ${
+          toast.show ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0 pointer-events-none'
+        }`}
+      >
+        <div className={`px-6 py-3 rounded-full shadow-lg font-semibold flex items-center gap-2 ${
+          toast.type === 'success' 
+            ? 'bg-slate-900 dark:bg-slate-800 text-white border border-slate-700' 
+            : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-white border border-slate-200 dark:border-slate-600'
+        }`}>
+          {toast.type === 'success' && (
+            <svg className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          )}
+          {toast.type === 'info' && (
+            <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          )}
+          {toast.message}
+        </div>
+      </div>
+
       {selectedPhoto && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/90 backdrop-blur-sm transition-opacity duration-300" onClick={() => setSelectedPhoto(null)}>
-          <div className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden max-w-5xl w-full flex flex-col md:flex-row max-h-[90vh] animate-in fade-in zoom-in duration-300 transition-colors" onClick={e => e.stopPropagation()}>
-            <button 
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-all" onClick={() => setSelectedPhoto(null)}>
+          <div 
+            className="bg-white dark:bg-slate-800 rounded-3xl w-full max-w-6xl max-h-[95vh] overflow-hidden flex flex-col md:flex-row shadow-2xl transform transition-all border border-slate-200 dark:border-slate-700"
+            onClick={e => e.stopPropagation()}
+          >  <button 
               onClick={() => setSelectedPhoto(null)}
               className="absolute top-4 right-4 z-10 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
               aria-label="Close modal"
@@ -390,7 +430,7 @@ function App() {
                   title="Copy link"
                   onClick={() => {
                     navigator.clipboard.writeText(selectedPhoto.fullUrl || selectedPhoto.url);
-                    alert("Image URL copied to clipboard!");
+                    showToast("Link copied to clipboard!", "success");
                   }}
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
