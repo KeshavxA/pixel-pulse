@@ -261,14 +261,29 @@ function App() {
                   </div>
                 )
               })}
-            </div>
 
-          {loading && (
-            <div className="flex flex-col items-center justify-center py-12 mt-4 w-full col-span-full">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 dark:border-blue-400"></div>
-              <p className="mt-4 text-slate-500 dark:text-slate-400 font-medium transition-colors">Loading more photography...</p>
+              {loading && Array.from({ length: 8 }).map((_, index) => {
+                const heightClasses = ['h-48', 'h-64', 'h-56', 'h-72', 'h-80', 'h-40', 'h-60', 'h-52'];
+                const heightClass = heightClasses[index % heightClasses.length];
+                return (
+                  <div key={`skeleton-${index}`} className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm border border-slate-100 dark:border-slate-700 break-inside-avoid mb-6 inline-block w-full animate-pulse">
+                    <div className={`w-full bg-slate-200 dark:bg-slate-700 ${heightClass}`}></div>
+                    <div className="p-4 flex justify-between items-center">
+                      <div className="flex-1 pr-4">
+                        <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4 mb-2"></div>
+                        <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-1/2 mb-2"></div>
+                        <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded w-1/4"></div>
+                      </div>
+                      <div className="flex gap-1.5 flex-shrink-0">
+                        <div className="w-8 h-8 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
+                        <div className="w-8 h-8 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
+                        <div className="w-8 h-8 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          )}
 
           {!loading && !error && filteredPhotos.length === 0 && (
             <div className="text-center py-20 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 mt-8 transition-colors">
