@@ -168,6 +168,29 @@ function App() {
     return result
   }, [photos, searchQuery, selectedCategory, sortBy])
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!selectedPhoto) return;
+      
+      const currentIndex = filteredPhotos.findIndex(p => p.id === selectedPhoto.id);
+      
+      if (e.key === 'Escape') {
+        setSelectedPhoto(null);
+      } else if (e.key === 'ArrowLeft') {
+        if (currentIndex > 0) {
+          setSelectedPhoto(filteredPhotos[currentIndex - 1]);
+        }
+      } else if (e.key === 'ArrowRight') {
+        if (currentIndex < filteredPhotos.length - 1) {
+          setSelectedPhoto(filteredPhotos[currentIndex + 1]);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedPhoto, filteredPhotos]);
+
   return (
     <div className={`min-h-screen ${isDarkMode ? 'dark bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-900'} py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300`}>
       <div className="max-w-7xl mx-auto">
