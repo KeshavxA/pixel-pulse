@@ -1,6 +1,7 @@
 import { useReducer, useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { favoritesReducer, initialState } from './favoritesReducer'
 import { useFetchPhotos } from './useFetchPhotos'
+import ColorThief from 'colorthief'
 
 function LightboxImage({ src, alt }) {
   const [zoom, setZoom] = useState(1);
@@ -66,6 +67,7 @@ function LightboxImage({ src, alt }) {
       <img 
         src={src} 
         alt={alt} 
+        crossOrigin="anonymous"
         className="max-h-[50vh] md:max-h-[90vh] object-contain w-full"
         style={{ 
           transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
@@ -172,6 +174,8 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [selectedPhoto, setSelectedPhoto] = useState(null)
+  const [dominantColor, setDominantColor] = useState(null)
+  const [colorPalette, setColorPalette] = useState([])
   const [sortBy, setSortBy] = useState('default')
   
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -231,6 +235,30 @@ function App() {
     
     return result
   }, [photos, searchQuery, selectedCategory, sortBy])
+
+  useEffect(() => {
+    if (!selectedPhoto) {
+      setDominantColor(null);
+      setColorPalette([]);
+      return;
+    }
+
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.src = selectedPhoto.fullUrl || selectedPhoto.url;
+    
+    img.onload = () => {
+      try {
+        const colorThief = new ColorThief();
+        const color = colorThief.getColor(img);
+        const palette = colorThief.getPalette(img, 3);
+        setDominantColor(color);
+        setColorPalette(palette);
+      } catch (err) {
+        console.error('Failed to extract colors', err);
+      }
+    };
+  }, [selectedPhoto]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -563,7 +591,15 @@ function App() {
       </div>
 
       {selectedPhoto && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-all" onClick={() => setSelectedPhoto(null)}>
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm transition-all duration-500" 
+          style={{
+            backgroundColor: dominantColor 
+              ? `rgba(${dominantColor[0]}, ${dominantColor[1]}, ${dominantColor[2]}, 0.85)`
+              : 'rgba(0,0,0,0.8)'
+          }}
+          onClick={() => setSelectedPhoto(null)}
+        >
           <div 
             className="bg-white dark:bg-slate-800 rounded-3xl w-full max-w-6xl max-h-[95vh] overflow-hidden flex flex-col md:flex-row shadow-2xl transform transition-all border border-slate-200 dark:border-slate-700"
             onClick={e => e.stopPropagation()}
@@ -576,7 +612,14 @@ function App() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-            <div className="w-full md:w-2/3 bg-slate-100 dark:bg-slate-900 flex items-center justify-center transition-colors relative overflow-hidden group">
+            <div 
+              className="w-full md:w-2/3 flex items-center justify-center transition-colors duration-500 relative overflow-hidden group"
+              style={{
+                backgroundColor: dominantColor 
+                  ? `rgba(${dominantColor[0]}, ${dominantColor[1]}, ${dominantColor[2]}, 0.15)`
+                  : 'rgb(241 245 249)' // slate-100 fallback
+              }}
+            >
                <LightboxImage src={selectedPhoto.fullUrl || selectedPhoto.url} alt={selectedPhoto.title} />
                <div className="absolute top-4 left-4 bg-black/50 text-white px-3 py-1.5 rounded-lg text-xs font-medium backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                  Double-click or scroll to zoom • Drag to pan
@@ -588,6 +631,22 @@ function App() {
                   <h2 className="text-3xl font-bold text-slate-900 dark:text-white transition-colors">{selectedPhoto.title}</h2>
                 </div>
                 <p className="text-lg text-blue-600 dark:text-blue-400 font-medium mb-6 transition-colors">@{selectedPhoto.author.toLowerCase().replace(' ', '')}</p>
+                
+                {colorPalette.length > 0 && (
+                  <div className="mb-8">
+                    <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Color Palette</h4>
+                    <div className="flex gap-3">
+                      {colorPalette.map((color, idx) => (
+                        <div 
+                          key={idx} 
+                          className="w-10 h-10 rounded-full shadow-sm border border-slate-200 dark:border-slate-700 transform hover:scale-110 transition-transform cursor-pointer"
+                          style={{ backgroundColor: `rgb(${color[0]}, ${color[1]}, ${color[2]})` }}
+                          title={`rgb(${color[0]}, ${color[1]}, ${color[2]})`}
+                        ></div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 
                 <div className="space-y-4 mb-8">
                   <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Photo Details</h4>
