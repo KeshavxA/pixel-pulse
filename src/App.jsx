@@ -2,6 +2,86 @@ import { useReducer, useEffect, useState, useMemo, useCallback, useRef } from 'r
 import { favoritesReducer, initialState } from './favoritesReducer'
 import { useFetchPhotos } from './useFetchPhotos'
 
+function LightboxImage({ src, alt }) {
+  const [zoom, setZoom] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    setZoom(1);
+    setPosition({ x: 0, y: 0 });
+  }, [src]);
+
+  const handleWheel = (e) => {
+    const zoomSensitivity = 0.005;
+    setZoom(prev => {
+      const newZoom = Math.min(Math.max(1, prev - e.deltaY * zoomSensitivity), 5);
+      if (newZoom === 1) setPosition({ x: 0, y: 0 });
+      return newZoom;
+    });
+  };
+
+  const handleMouseDown = (e) => {
+    if (zoom > 1) {
+      e.preventDefault();
+      setIsDragging(true);
+      setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    if (isDragging && zoom > 1) {
+      setPosition({
+        x: e.clientX - dragStart.x,
+        y: e.clientY - dragStart.y
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleDoubleClick = () => {
+    if (zoom > 1) {
+      setZoom(1);
+      setPosition({ x: 0, y: 0 });
+    } else {
+      setZoom(2.5);
+    }
+  };
+
+  return (
+    <div 
+      className="w-full h-full flex items-center justify-center overflow-hidden relative"
+      onWheel={handleWheel}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      onDoubleClick={handleDoubleClick}
+      style={{ cursor: zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in' }}
+    >
+      <img 
+        src={src} 
+        alt={alt} 
+        className="max-h-[50vh] md:max-h-[90vh] object-contain w-full"
+        style={{ 
+          transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
+          transition: isDragging ? 'none' : 'transform 0.2s ease-out'
+        }}
+        draggable="false"
+      />
+      {zoom > 1 && (
+        <div className="absolute bottom-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm font-semibold backdrop-blur-md shadow-lg pointer-events-none">
+          {Math.round(zoom * 100)}%
+        </div>
+      )}
+    </div>
+  );
+}
+
 function App() {
   const { photos, loading, error, loadMore, hasMore } = useFetchPhotos()
   const observer = useRef()
@@ -382,8 +462,11 @@ function App() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-            <div className="w-full md:w-2/3 bg-slate-100 dark:bg-slate-900 flex items-center justify-center transition-colors">
-               <img src={selectedPhoto.fullUrl || selectedPhoto.url} alt={selectedPhoto.title} className="max-h-[50vh] md:max-h-[90vh] object-contain w-full" />
+            <div className="w-full md:w-2/3 bg-slate-100 dark:bg-slate-900 flex items-center justify-center transition-colors relative overflow-hidden group">
+               <LightboxImage src={selectedPhoto.fullUrl || selectedPhoto.url} alt={selectedPhoto.title} />
+               <div className="absolute top-4 left-4 bg-black/50 text-white px-3 py-1.5 rounded-lg text-xs font-medium backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                 Double-click or scroll to zoom • Drag to pan
+               </div>
             </div>
             <div className="w-full md:w-1/3 p-6 sm:p-8 flex flex-col justify-between overflow-y-auto">
               <div>
