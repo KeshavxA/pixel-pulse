@@ -82,6 +82,75 @@ function LightboxImage({ src, alt }) {
   );
 }
 
+function SaveToCollectionModal({ isOpen, onClose, photo, collections, dispatch, newCollectionName, setNewCollectionName, showToast }) {
+  if (!isOpen || !photo) return null;
+
+  const handleCreate = (e) => {
+    e.preventDefault();
+    if (!newCollectionName.trim()) return;
+    dispatch({ type: 'CREATE_COLLECTION', payload: { name: newCollectionName.trim() } });
+    setNewCollectionName('');
+    showToast(`Created collection ${newCollectionName.trim()}`, 'success');
+  };
+
+  const handleToggle = (collectionId, collectionName) => {
+    dispatch({ type: 'TOGGLE_PHOTO_IN_COLLECTION', payload: { collectionId, photo } });
+    const isSaved = collections.find(c => c.id === collectionId).photos.some(p => p.id === photo.id);
+    showToast(isSaved ? `Removed from ${collectionName}` : `Saved to ${collectionName}`, 'success');
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
+      <div 
+        className="bg-white dark:bg-slate-800 rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-700"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="p-6 border-b border-slate-100 dark:border-slate-700">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-bold text-slate-800 dark:text-white">Save to...</h3>
+            <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+              <svg className="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="max-h-[40vh] overflow-y-auto space-y-2">
+            {collections.map(c => {
+              const isSaved = c.photos.some(p => p.id === photo.id);
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => handleToggle(c.id, c.name)}
+                  className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left group"
+                >
+                  <span className="font-semibold text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white">{c.name}</span>
+                  {isSaved ? (
+                    <span className="bg-slate-900 dark:bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full">Saved</span>
+                  ) : (
+                    <span className="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold px-3 py-1 rounded-full group-hover:bg-slate-200 dark:group-hover:bg-slate-600">Save</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div className="p-6 bg-slate-50 dark:bg-slate-800/50">
+          <form onSubmit={handleCreate} className="flex gap-2">
+            <input 
+              type="text" 
+              placeholder="New collection..." 
+              value={newCollectionName}
+              onChange={e => setNewCollectionName(e.target.value)}
+              className="flex-1 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-white"
+            />
+            <button type="submit" disabled={!newCollectionName.trim()} className="bg-slate-900 dark:bg-blue-600 text-white font-semibold px-4 py-2 rounded-xl disabled:opacity-50">Create</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const { photos, loading, error, loadMore, hasMore } = useFetchPhotos()
   const observer = useRef()
@@ -97,7 +166,9 @@ function App() {
     if (node) observer.current.observe(node)
   }, [loading, hasMore, loadMore])
   
-  const [favorites, dispatch] = useReducer(favoritesReducer, initialState)
+  const [collections, dispatch] = useReducer(favoritesReducer, initialState)
+  const [photoToSave, setPhotoToSave] = useState(null)
+  const [newCollectionName, setNewCollectionName] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [selectedPhoto, setSelectedPhoto] = useState(null)
@@ -118,8 +189,8 @@ function App() {
   }, [photos])
 
   useEffect(() => {
-    localStorage.setItem('favorites', JSON.stringify(favorites))
-  }, [favorites])
+    localStorage.setItem('favorites', JSON.stringify(collections))
+  }, [collections])
 
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' })
   const toastTimeout = useRef(null)
@@ -132,16 +203,9 @@ function App() {
     }, 3000)
   }, [])
 
-  const toggleFavorite = useCallback((photo) => {
-    const isFavorite = favorites.some((fav) => fav.id === photo.id)
-    if (isFavorite) {
-      dispatch({ type: 'REMOVE_FAVORITE', payload: photo })
-      showToast('Removed from favorites', 'info')
-    } else {
-      dispatch({ type: 'ADD_FAVORITE', payload: photo })
-      showToast('Added to favorites', 'success')
-    }
-  }, [favorites, showToast])
+  const openSaveModal = useCallback((photo) => {
+    setPhotoToSave(photo)
+  }, [])
 
   const handleSearch = useCallback((e) => {
     setSearchQuery(e.target.value)
@@ -257,7 +321,9 @@ function App() {
 
               <div className="inline-flex items-center px-6 py-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 transition-colors">
                 <span className="text-red-500 mr-2">❤️</span>
-                <span className="font-semibold text-slate-700 dark:text-slate-200 transition-colors">{favorites.length} Favorites</span>
+                <span className="font-semibold text-slate-700 dark:text-slate-200 transition-colors">
+                  {collections.reduce((sum, c) => sum + c.photos.length, 0)} Saved
+                </span>
               </div>
             </div>
           </div>
@@ -297,7 +363,7 @@ function App() {
 
           <div className="columns-1 sm:columns-2 lg:columns-4 gap-6">
             {filteredPhotos.map((photo, index) => {
-              const isFavorite = favorites.some((fav) => fav.id === photo.id)
+              const isSaved = collections.some(c => c.photos.some(p => p.id === photo.id))
               const isLastItem = index === filteredPhotos.length - 1
               return (
                 <div
@@ -350,17 +416,17 @@ function App() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                            toggleFavorite(photo)
+                            openSaveModal(photo)
                           }}
-                          className={`p-2 rounded-full transition-all duration-300 ${isFavorite
+                          className={`p-2 rounded-full transition-all duration-300 ${isSaved
                               ? 'bg-red-50 dark:bg-red-900/30 text-red-500 shadow-inner rotate-3'
                               : 'bg-slate-50 dark:bg-slate-700 text-slate-400 hover:text-red-400 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-slate-600'
                             }`}
-                          aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                          aria-label={isSaved ? "Saved" : "Save"}
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
-                            className={`h-5 w-5 ${isFavorite ? 'fill-current' : 'fill-none'}`}
+                            className={`h-5 w-5 ${isSaved ? 'fill-current' : 'fill-none'}`}
                             viewBox="0 0 24 24"
                             stroke="currentColor"
                           >
@@ -414,36 +480,61 @@ function App() {
           )}
         </main>
 
-        {favorites.length > 0 && (
+        {collections.some(c => c.photos.length > 0) && (
           <section className="mt-20">
             <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-8 flex items-center transition-colors">
-              <span className="mr-3">❤️</span> Your Collection
+              <span className="mr-3">📁</span> Your Collections
             </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4">
-              {favorites.map((photo) => (
-                <div key={photo.id} className="relative group">
-                  <img
-                    src={photo.url}
-                    className="w-full h-24 object-cover rounded-xl shadow-sm border-2 border-white dark:border-slate-800 transform transition-transform group-hover:scale-105"
-                    alt={photo.title}
-                  />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
-                    <p className="text-[8px] text-white font-bold p-1 text-center truncate">{photo.author}</p>
+            <div className="space-y-12">
+              {collections.filter(c => c.photos.length > 0).map(collection => (
+                <div key={collection.id}>
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 transition-colors">{collection.name}</h3>
+                    <span className="text-sm font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full transition-colors">{collection.photos.length}</span>
                   </div>
-                  <button
-                    onClick={() => dispatch({ type: 'REMOVE_FAVORITE', payload: photo })}
-                    className="absolute -top-2 -right-2 bg-white text-red-500 rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 z-10"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4">
+                    {collection.photos.map((photo) => (
+                      <div key={photo.id} className="relative group">
+                        <img
+                          src={photo.url}
+                          className="w-full h-24 object-cover rounded-xl shadow-sm border-2 border-white dark:border-slate-800 transform transition-transform group-hover:scale-105"
+                          alt={photo.title}
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
+                          <p className="text-[8px] text-white font-bold p-1 text-center truncate">{photo.author}</p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            dispatch({ type: 'TOGGLE_PHOTO_IN_COLLECTION', payload: { collectionId: collection.id, photo } });
+                            showToast(`Removed from ${collection.name}`, 'info');
+                          }}
+                          className="absolute -top-2 -right-2 bg-white text-red-500 rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 z-10"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>
           </section>
         )}
       </div>
+
+      {/* Save to Collection Modal */}
+      <SaveToCollectionModal 
+        isOpen={!!photoToSave}
+        onClose={() => setPhotoToSave(null)}
+        photo={photoToSave}
+        collections={collections}
+        dispatch={dispatch}
+        newCollectionName={newCollectionName}
+        setNewCollectionName={setNewCollectionName}
+        showToast={showToast}
+      />
 
       {/* Lightbox Modal */}
       {/* Toast Notification */}
