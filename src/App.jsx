@@ -217,8 +217,10 @@ function App() {
 
   const filteredPhotos = useMemo(() => {
     let result = photos.filter(photo => {
-      const matchesSearch = photo.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            photo.title.toLowerCase().includes(searchQuery.toLowerCase())
+      const query = searchQuery.toLowerCase()
+      const matchesSearch = photo.author.toLowerCase().includes(query) ||
+                            photo.title.toLowerCase().includes(query) ||
+                            photo.category.toLowerCase().includes(query)
       const matchesCategory = selectedCategory === 'All' || photo.category === selectedCategory
       return matchesSearch && matchesCategory
     })
@@ -310,7 +312,7 @@ function App() {
               </span>
               <input
                 type="text"
-                placeholder="Search by author name..."
+                placeholder="Search by author, title, or category..."
                 className="block w-full pl-10 pr-10 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-colors placeholder-slate-400 dark:placeholder-slate-500"
                 value={searchQuery}
                 onChange={handleSearch}
