@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 
+const CATEGORIES_LIST = ['Photography', 'Nature', 'Architecture', 'Portrait', 'Urban'];
+
 export function useFetchPhotos() {
     const [photos, setPhotos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
-
-    const categoriesList = ['Photography', 'Nature', 'Architecture', 'Portrait', 'Urban'];
 
     const fetchPhotos = useCallback(async (pageNum) => {
         try {
@@ -25,7 +25,7 @@ export function useFetchPhotos() {
             } else {
                 const formattedPhotos = data.map(photo => {
                     // Create a deterministic category based on ID
-                    const categoryIndex = parseInt(photo.id, 10) % categoriesList.length;
+                    const categoryIndex = parseInt(photo.id, 10) % CATEGORIES_LIST.length;
                     const scaledHeight = Math.round((600 / photo.width) * photo.height);
                     
                     return {
@@ -34,7 +34,7 @@ export function useFetchPhotos() {
                         fullUrl: photo.download_url,
                         title: `Visual Series #${photo.id}`, 
                         author: photo.author,
-                        category: categoriesList[categoryIndex]
+                        category: CATEGORIES_LIST[categoryIndex]
                     };
                 });
 
