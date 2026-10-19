@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
 const CATEGORIES_LIST = ['Photography', 'Nature', 'Architecture', 'Portrait', 'Urban'];
+const PHOTOS_PER_PAGE = 20;
 
 export function useFetchPhotos() {
     const [photos, setPhotos] = useState([]);
@@ -12,7 +13,7 @@ export function useFetchPhotos() {
     const fetchPhotos = useCallback(async (pageNum) => {
         try {
             setLoading(true);
-            const response = await fetch(`https://picsum.photos/v2/list?page=${pageNum}&limit=20`);
+            const response = await fetch(`https://picsum.photos/v2/list?page=${pageNum}&limit=${PHOTOS_PER_PAGE}`);
 
             if (!response.ok) {
                 throw new Error(`API Error: ${response.status} ${response.statusText}`);
