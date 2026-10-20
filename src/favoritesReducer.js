@@ -1,5 +1,10 @@
 const getInitialState = () => {
-    const data = JSON.parse(localStorage.getItem('favorites')) || [];
+    let data = [];
+    try {
+        data = JSON.parse(localStorage.getItem('favorites')) || [];
+    } catch {
+        data = [];
+    }
     
     // Migration check: If it's a flat array of photos, convert to a single collection
     if (data.length > 0 && !data[0].photos) {
