@@ -285,6 +285,15 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedPhoto, filteredPhotos]);
 
+  useEffect(() => {
+    const shouldLock = Boolean(selectedPhoto || photoToSave);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = shouldLock ? 'hidden' : previousOverflow;
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [selectedPhoto, photoToSave]);
+
   return (
     <div className={`min-h-screen ${isDarkMode ? 'dark bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-900'} py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300`}>
       <div className="max-w-7xl mx-auto">
