@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const CATEGORIES_LIST = ['Photography', 'Nature', 'Architecture', 'Portrait', 'Urban'];
+const CATEGORIES_LIST = ['Photography', 'Nature', 'Architecture', 'Portrait', 'Urban', 'Landscape'];
 const PHOTOS_PER_PAGE = 20;
 
 export function useFetchPhotos() {
