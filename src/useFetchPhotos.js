@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 
 const CATEGORIES_LIST = ['Photography', 'Nature', 'Architecture', 'Portrait', 'Urban', 'Landscape'];
 const PHOTOS_PER_PAGE = 20;
+const IMAGE_WIDTH = 600;
 
 export function useFetchPhotos() {
     const [photos, setPhotos] = useState([]);
@@ -27,11 +28,11 @@ export function useFetchPhotos() {
                 const formattedPhotos = data.map(photo => {
                     // Create a deterministic category based on ID
                     const categoryIndex = parseInt(photo.id, 10) % CATEGORIES_LIST.length;
-                    const scaledHeight = Math.round((600 / photo.width) * photo.height);
+                    const scaledHeight = Math.round((IMAGE_WIDTH / photo.width) * photo.height);
                     
                     return {
                         id: photo.id,
-                        url: `https://picsum.photos/id/${photo.id}/600/${scaledHeight}`,
+                        url: `https://picsum.photos/id/${photo.id}/${IMAGE_WIDTH}/${scaledHeight}`,
                         fullUrl: photo.download_url,
                         title: `Visual Series #${photo.id}`, 
                         author: photo.author,
