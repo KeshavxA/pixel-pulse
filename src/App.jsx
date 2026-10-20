@@ -141,6 +141,7 @@ function SaveToCollectionModal({ isOpen, onClose, photo, collections, dispatch, 
             <input 
               type="text" 
               placeholder="New collection..." 
+              maxLength={40}
               value={newCollectionName}
               onChange={e => setNewCollectionName(e.target.value)}
               className="flex-1 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-white"
